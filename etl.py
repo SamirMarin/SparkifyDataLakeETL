@@ -1,6 +1,7 @@
 import configparser
 from datetime import datetime
 import os
+import shutil
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import udf, col
 from pyspark.sql.functions import year, month, dayofmonth, hour, weekofyear, date_format
@@ -11,6 +12,15 @@ config = configparser.ConfigParser()
 
 #os.environ['AWS_ACCESS_KEY_ID']=config['AWS_ACCESS_KEY_ID']
 #os.environ['AWS_SECRET_ACCESS_KEY']=config['AWS_SECRET_ACCESS_KEY']
+
+
+def delete_table_if_exists(path):
+    print("checking if table exists")
+    if os.path.exists(path):
+        shutil.rmtree(path)
+        print("Table exits, table deleted")
+    else:
+        print("Table does not exist")
 
 
 def create_spark_session():
@@ -32,18 +42,30 @@ def process_song_data(spark, input_data, output_data):
     print(df.count())
 
     # extract columns to create songs table
+    print("extracting columns to create songs_table")
     songs_table = df.select(["song_id", "title", "artist_id", "year", "duration"]).dropDuplicates()
     songs_table.printSchema()
     print(songs_table.count())
     
+    songs_table_path = output_data + "/songs_table"
+    delete_table_if_exists(songs_table_path)
     # write songs table to parquet files partitioned by year and artist
-    songs_table.write.partitionBy("year", "artist_id").parquet(output_data + "/songs_table")
+
+    print("writing songs_table")
+    songs_table.write.partitionBy("year", "artist_id").parquet(songs_table_path)
 
     # extract columns to create artists table
-    #artists_table = 
+    print("extracting columns to create artists_table")
+    artists_table = df.select(["artist_id", "artist_name", "artist_location", "artist_latitude", "artist_longitude"]).dropDuplicates()
+    artists_table.printSchema()
+    print(artists_table.count())
     
+    artists_table_path = output_data + "/artists_table"
+    delete_table_if_exists(artists_table_path)
     # write artists table to parquet files
-    #artists_table
+
+    print("writing artists_table")
+    artists_table.write.parquet(output_data + "/artists_table")
 
 
 #def process_log_data(spark, input_data, output_data):
