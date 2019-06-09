@@ -65,35 +65,56 @@ def process_song_data(spark, input_data, output_data):
     # write artists table to parquet files
 
     print("writing artists_table")
-    artists_table.write.parquet(output_data + "/artists_table")
+    artists_table.write.parquet(artists_table_path)
 
 
-#def process_log_data(spark, input_data, output_data):
-#    # get filepath to log data file
-#    log_data =
-#
-#    # read log data file
-#    df = 
-#    
-#    # filter by actions for song plays
-#    df = 
-#
-#    # extract columns for users table    
-#    artists_table = 
-#    
-#    # write users table to parquet files
-#    artists_table
-#
-#    # create timestamp column from original timestamp column
-#    get_timestamp = udf()
-#    df = 
-#    
-#    # create datetime column from original timestamp column
-#    get_datetime = udf()
-#    df = 
-#    
-#    # extract columns to create time table
-#    time_table = 
+def process_log_data(spark, input_data, output_data):
+    # get filepath to log data file
+    log_data = input_data + "/log-data/*\.json"
+
+    # read log data file
+    print("Reading log_data in spark dataframe")
+    df = spark.read.json(log_data) 
+    df.printSchema()
+    print(df.count())
+    
+    # filter by actions for song plays
+    print("Filter on NextSong")
+    df = df.filter(df["page"] == "NextSong")
+    print(df.count())
+
+    # extract columns for users table    
+    print("extract columns to create users table")
+    users_table = df.select(["userId", "firstName", "lastName", "gender", "level"]).dropDuplicates()
+    users_table.printSchema()
+    print(users_table.count())
+    
+    # write users table to parquet files
+    users_table_path = output_data + "/users_table"
+    delete_table_if_exists(users_table_path)
+
+    print("writing users_table")
+    users_table.write.parquet(users_table_path)
+
+    # create timestamp column from original timestamp column
+    #get_timestamp = udf(lambda ts: datetime.fromtimestamp(ts / 1000.0))
+    get_timestamp = udf(lambda ts: ts/1000)
+    df = df.withColumn("timestamp", get_timestamp(df.ts))
+    df.show(10)
+    timestamp_df = df.select(["timestamp"]).dropDuplicates()
+    timestamp_df.printSchema()
+    timestamp_df.show(2)
+    
+    # create datetime column from original timestamp column
+    #get_datetime = udf()
+    #df = 
+    
+    # extract columns to create time table
+    time_table = timestamp_df.select(hour("timestamp"), month("timestamp"), year("timestamp") )
+    time_table.printSchema()
+    time_table.show(2)
+    print(datetime.fromtimestamp(1542262233796/1000))
+    print(datetime.fromtimestamp(1542262233796/1000).hour)
 #    
 #    # write time table to parquet files partitioned by year and month
 #    time_table
@@ -114,8 +135,8 @@ def main():
     input_data = os.path.expanduser('~') + "/DataEngNanoDegree/projects/DataLakeWithSpark/data"
     output_data = os.path.expanduser('~') + "/DataEngNanoDegree/projects/DataLakeWithSpark/outdata"
     
-    process_song_data(spark, input_data, output_data)    
-    #process_log_data(spark, input_data, output_data)
+    #process_song_data(spark, input_data, output_data)    
+    process_log_data(spark, input_data, output_data)
 
 
 if __name__ == "__main__":
