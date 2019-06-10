@@ -4,7 +4,7 @@ import os
 import shutil
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import udf, col
-from pyspark.sql.functions import year, month, dayofmonth, hour, weekofyear, date_format
+from pyspark.sql.functions import year, month, dayofmonth, hour, weekofyear, dayofmonth, dayofweek, date_format
 
 
 config = configparser.ConfigParser()
@@ -98,27 +98,34 @@ def process_log_data(spark, input_data, output_data):
 
     # create timestamp column from original timestamp column
     #get_timestamp = udf(lambda ts: datetime.fromtimestamp(ts / 1000.0))
-    get_timestamp = udf(lambda ts: ts/1000)
+    get_timestamp = udf(lambda ts: datetime.fromtimestamp(ts/1000).strftime('%Y-%m-%d %H:%M:%S'))
     df = df.withColumn("timestamp", get_timestamp(df.ts))
-    df.show(10)
     timestamp_df = df.select(["timestamp"]).dropDuplicates()
     timestamp_df.printSchema()
-    timestamp_df.show(2)
-    
-    # create datetime column from original timestamp column
-    #get_datetime = udf()
-    #df = 
+    print(timestamp_df.count())
     
     # extract columns to create time table
-    time_table = timestamp_df.select(hour("timestamp"), month("timestamp"), year("timestamp") )
+    time_table = timestamp_df.select(
+                                     date_format("timestamp", "yyyy-MM-dd HH:mm:ss").alias("start_time"),
+                                     hour("timestamp").alias("hour"),
+                                     dayofmonth("timestamp").alias("day"),
+                                     weekofyear("timestamp").alias("week"),
+                                     month("timestamp").alias("month"),
+                                     year("timestamp").alias("year"),
+                                     dayofweek("timestamp").alias("weekday")
+                                     )
+
     time_table.printSchema()
-    time_table.show(2)
-    print(datetime.fromtimestamp(1542262233796/1000))
-    print(datetime.fromtimestamp(1542262233796/1000).hour)
-#    
-#    # write time table to parquet files partitioned by year and month
-#    time_table
-#
+    print(time_table.count())
+    
+    # write time table to parquet files partitioned by year and month
+    time_table_path = output_data + "/time_table"
+    delete_table_if_exists(time_table_path)
+
+    print("writing time_table")
+    time_table.write.partitionBy("year", "month").parquet(time_table_path)
+
+
 #    # read in song data to use for songplays table
 #    song_df = 
 #
