@@ -126,12 +126,28 @@ def process_log_data(spark, input_data, output_data):
     time_table.write.partitionBy("year", "month").parquet(time_table_path)
 
 
-#    # read in song data to use for songplays table
-#    song_df = 
-#
-#    # extract columns from joined song and log datasets to create songplays table 
-#    songplays_table = 
-#
+    # read in song data to use for songplays table
+    song_table = spark.read.parquet(output_data + "/songs_table")
+    artists_table = spark.read.parquet(output_data + "/artists_table") 
+    song_df = song_table.join(artists_table, song_table.artist_id == artists_table.artist_id) 
+    print("the join artist and song table")
+    song_df.printSchema()
+    print(song_df.count())
+
+    # extract columns from joined song and log datasets to create songplays table 
+    df_join_song_df = df.join(
+                              song_df, 
+                              (df.song == song_df.title) & 
+                              (df.artist == song_df.artist_name) &
+                              (df.length == song_df.duration) 
+                              )
+
+    df_join_song_df.printSchema()
+    print(df_join_song_df.count())
+    
+    #songplays_table = 
+
+
 #    # write songplays table to parquet files partitioned by year and month
 #    songplays_table
 
