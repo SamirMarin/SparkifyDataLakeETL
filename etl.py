@@ -4,7 +4,7 @@ import os
 import shutil
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import udf, col
-from pyspark.sql.functions import year, month, dayofmonth, hour, weekofyear, dayofmonth, dayofweek, date_format
+from pyspark.sql.functions import year, month, dayofmonth, hour, weekofyear, dayofmonth, dayofweek, date_format, monotonically_increasing_id
 
 
 config = configparser.ConfigParser()
@@ -129,7 +129,7 @@ def process_log_data(spark, input_data, output_data):
     # read in song data to use for songplays table
     song_table = spark.read.parquet(output_data + "/songs_table")
     artists_table = spark.read.parquet(output_data + "/artists_table") 
-    song_df = song_table.join(artists_table, song_table.artist_id == artists_table.artist_id) 
+    song_df = song_table.join(artists_table, song_table.artist_id == artists_table.artist_id).drop(song_table.artist_id)
     print("the join artist and song table")
     song_df.printSchema()
     print(song_df.count())
@@ -142,14 +142,44 @@ def process_log_data(spark, input_data, output_data):
                               (df.length == song_df.duration) 
                               )
 
+    df_join_song_df = df_join_song_df.withColumn("songplay_id", monotonically_increasing_id())
     df_join_song_df.printSchema()
     print(df_join_song_df.count())
     
-    #songplays_table = 
+    
+    songplays_table = df_join_song_df.select(
+                                             col("songplay_id"),
+                                             date_format("timestamp", "yyyy-MM-dd HH:mm:ss").alias("start_time"),
+                                             col("userId"),
+                                             col("level"),
+                                             col("song_id"),
+                                             col("artist_id"),
+                                             col("sessionId"),
+                                             col("artist_location"),
+                                             col("userAgent")
+                                            )
+
+    songplays_table.printSchema()
 
 
-#    # write songplays table to parquet files partitioned by year and month
-#    songplays_table
+    # write songplays table to parquet files partitioned by year and month
+    songplays_table_path = output_data + "/songplays_table"
+    delete_table_if_exists(songplays_table_path)
+
+    print("writing songplays_table")
+    songplays_table.withColumn(
+                              "year", 
+                              year(
+                                   songplays_table.start_time
+                                   )).withColumn(
+                                                "month", 
+                                                month(
+                                                      songplays_table.start_time
+                                                      )).write.partitionBy(
+                                                                           "year", 
+                                                                           "month").parquet(
+                                                                                            songplays_table_path
+                                                                                            )
 
 
 def main():
