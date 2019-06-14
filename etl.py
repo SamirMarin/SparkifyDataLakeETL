@@ -8,10 +8,10 @@ from pyspark.sql.functions import year, month, dayofmonth, hour, weekofyear, day
 
 
 config = configparser.ConfigParser()
-#config.read('dl.cfg')
+config.read('dl.cfg')
 
-#os.environ['AWS_ACCESS_KEY_ID']=config['AWS_ACCESS_KEY_ID']
-#os.environ['AWS_SECRET_ACCESS_KEY']=config['AWS_SECRET_ACCESS_KEY']
+os.environ['AWS_ACCESS_KEY_ID']=config['AWSCREDENTIALS']['AWS_ACCESS_KEY_ID']
+os.environ['AWS_SECRET_ACCESS_KEY']=config['AWSCREDENTIALS']['AWS_SECRET_ACCESS_KEY']
 
 
 def delete_table_if_exists(path):
@@ -70,7 +70,8 @@ def process_song_data(spark, input_data, output_data):
 
 def process_log_data(spark, input_data, output_data):
     # get filepath to log data file
-    log_data = input_data + "/log-data/*\.json"
+    #log_data = input_data + "/log_data/*\.json"
+    log_data = input_data + "/log_data/2018/11/*\.json"
 
     # read log data file
     print("Reading log_data in spark dataframe")
@@ -183,9 +184,10 @@ def process_log_data(spark, input_data, output_data):
 
 def main():
     spark = create_spark_session()
-    #input_data = "s3a://udacity-dend/"
-    input_data = os.path.expanduser('~') + "/DataEngNanoDegree/projects/DataLakeWithSpark/data"
-    output_data = os.path.expanduser('~') + "/DataEngNanoDegree/projects/DataLakeWithSpark/outdata"
+    input_data = "s3a://udacity-dend"
+    output_data = "s3a://sparkifydbsm"
+    #input_data = os.path.expanduser('~') + "/DataEngNanoDegree/projects/DataLakeWithSpark/data"
+    #output_data = os.path.expanduser('~') + "/DataEngNanoDegree/projects/DataLakeWithSpark/outdata"
     
     process_song_data(spark, input_data, output_data)    
     process_log_data(spark, input_data, output_data)
