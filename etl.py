@@ -97,7 +97,6 @@ def process_log_data(spark, input_data, output_data):
     users_table.write.parquet(users_table_path)
 
     # create timestamp column from original timestamp column
-    #get_timestamp = udf(lambda ts: datetime.fromtimestamp(ts / 1000.0))
     get_timestamp = udf(lambda ts: datetime.fromtimestamp(ts/1000).strftime('%Y-%m-%d %H:%M:%S'))
     df = df.withColumn("timestamp", get_timestamp(df.ts))
     timestamp_df = df.select(["timestamp"]).dropDuplicates()
@@ -188,7 +187,7 @@ def main():
     input_data = os.path.expanduser('~') + "/DataEngNanoDegree/projects/DataLakeWithSpark/data"
     output_data = os.path.expanduser('~') + "/DataEngNanoDegree/projects/DataLakeWithSpark/outdata"
     
-    #process_song_data(spark, input_data, output_data)    
+    process_song_data(spark, input_data, output_data)    
     process_log_data(spark, input_data, output_data)
 
 
