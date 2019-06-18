@@ -159,7 +159,7 @@ def process_log_data(spark, input_data, output_data):
                               (df.song == song_df.title) & 
                               (df.artist == song_df.artist_name) &
                               (df.length == song_df.duration) 
-                              )
+                              ).dropDuplicates()
 
     df_join_song_df = df_join_song_df.withColumn("songplay_id", monotonically_increasing_id())
     df_join_song_df.printSchema()
