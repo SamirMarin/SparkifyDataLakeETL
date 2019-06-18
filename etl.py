@@ -70,7 +70,6 @@ def process_song_data(spark, input_data, output_data):
 
 def process_log_data(spark, input_data, output_data):
     # get filepath to log data file
-    #log_data = input_data + "/log_data/*\.json"
     log_data = input_data + "/log_data/2018/11/*\.json"
 
     # read log data file
@@ -184,10 +183,10 @@ def process_log_data(spark, input_data, output_data):
 
 def main():
     spark = create_spark_session()
-    input_data = "s3a://udacity-dend"
-    output_data = "s3a://sparkifydbsm"
-    #input_data = os.path.expanduser('~') + "/DataEngNanoDegree/projects/DataLakeWithSpark/data"
-    #output_data = os.path.expanduser('~') + "/DataEngNanoDegree/projects/DataLakeWithSpark/outdata"
+    input_data = config['OUTINFOLDERS']['INPUT_PATH']
+    output_data = config['OUTINFOLDERS']['OUTPUT_PATH']
+    #input_data = "s3a://udacity-dend"
+    #output_data = "s3a://sparkifydbsm"
     
     process_song_data(spark, input_data, output_data)    
     process_log_data(spark, input_data, output_data)
