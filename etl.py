@@ -205,8 +205,6 @@ def main():
     spark = create_spark_session()
     input_data = config['OUTINFOLDERS']['INPUT_PATH']
     output_data = config['OUTINFOLDERS']['OUTPUT_PATH']
-    #input_data = "s3a://udacity-dend"
-    #output_data = "s3a://sparkifydbsm"
     
     process_song_data(spark, input_data, output_data)    
     process_log_data(spark, input_data, output_data)
