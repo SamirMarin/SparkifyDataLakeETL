@@ -15,6 +15,7 @@ os.environ['AWS_SECRET_ACCESS_KEY']=config['AWSCREDENTIALS']['AWS_SECRET_ACCESS_
 
 
 def delete_table_if_exists(path):
+    """Deletes given folder in path if exists"""
     print("checking if table exists")
     if os.path.exists(path):
         shutil.rmtree(path)
@@ -24,6 +25,7 @@ def delete_table_if_exists(path):
 
 
 def create_spark_session():
+    """Creates a spark session connection"""
     spark = SparkSession \
         .builder \
         .config("spark.jars.packages", "org.apache.hadoop:hadoop-aws:2.7.0") \
@@ -32,6 +34,15 @@ def create_spark_session():
 
 
 def process_song_data(spark, input_data, output_data):
+    """Obtains song data from json files and processes 
+    them using spark, writing data to songs_table and
+    artists_table parquet files
+    
+    Keyword arguments
+    spark - spark connection
+    input_data - path to read data from
+    output_data - path to write parquet files to
+    """
     # get filepath to song data file
     song_data = input_data + "/song_data/[A-Z]/[A-Z]/[A-Z]/*\.json"
     
@@ -69,6 +80,15 @@ def process_song_data(spark, input_data, output_data):
 
 
 def process_log_data(spark, input_data, output_data):
+    """Obtains log data from json files and processes 
+    them using spark, writing data to users_table, 
+    time_table, and songplays_table parquet files
+    
+    Keyword arguments
+    spark - spark connection
+    input_data - path to read data from
+    output_data - path to write parquet files to
+    """
     # get filepath to log data file
     log_data = input_data + "/log_data/2018/11/*\.json"
 
